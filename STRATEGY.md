@@ -1,120 +1,89 @@
-# Hoja de Ruta: Desbloqueando una Base de Código Desconocida con IA
+# Aplicando desarrollo guiado por especificaciones - Dashboard financiero
 
-Como Ingeniero de IA Senior, tu valor no reside en la velocidad con la que escribes código, sino en tu capacidad para auditar, comprender y gobernar sistemas complejos. En este reto, te enfrentarás al repositorio del Financial Dashboard, una base de código con documentación deficiente y un handover incompleto. Tu misión es dejar de ser un consumidor pasivo de respuestas de IA para convertirte en el arquitecto que dicta las reglas del sistema.
+## 🎯 Tu reto
 
----
+El dashboard financiero que construiste recientemente ya está en manos del equipo de finanzas del cliente, y tienen feedback. Quieren más control sobre los datos que ven, una forma de detectar gastos inusuales sin revisar filas una a una, y una vista dedicada para comparar ingresos entre sus dos líneas de negocio.
 
-## 1. Introducción: El Cambio de Mentalidad (Mindset)
+Antes de que alguien construya un solo componente, tu tech lead ha parado al equipo: **"Primero la especificación. Luego construimos."**
 
-El éxito en la ingeniería moderna no depende de la confianza ciega en los modelos de lenguaje, sino en el uso de estos como generadores de hipótesis que tú, como experto, debes refutar o confirmar. La "Nota de Calidad" de este proyecto es clara: tu entrega debe ser un trabajo profesional de mantenimiento, no un conjunto de notas genéricas.
+Una especificación bien escrita define qué ve el usuario, qué datos necesita cada componente y qué reglas rigen cada campo. Si la especificación es clara, cualquier desarrollador — o agente de IA — puede implementarla correctamente sin hacerte preguntas. Tu trabajo es producir esa especificación para tres funcionalidades concretas.
 
-* **Filosofía Central:** Validar contra el código real, no contra suposiciones. La IA es un copiloto propenso a alucinaciones; tú eres el capitán que verifica la instrumentación antes de despegar.
+Empieza abriendo `/docs` en tu navegador con el backend en marcha. Lee las formas de respuesta y las reglas de parámetros de los endpoints relevantes antes de escribir ningún tipo ni descripción de componente. Tus especificaciones deben coincidir con lo que la API realmente devuelve.
 
-### Los 3 Principios del Handover Profesional
-1. **Inspección Real:** Ignora lo que el README dice que el proyecto "debería hacer". Ejecuta el código y observa qué hace realmente.
-2. **Evidencia Directa:** Toda afirmación técnica debe estar respaldada por una ruta de archivo y un bloque de código específico. Si no hay evidencia, es una suposición peligrosa.
-3. **Mantenibilidad:** Tu objetivo final es reducir la carga cognitiva del próximo ingeniero, institucionalizando el conocimiento que hoy estás extrayendo.
+> Tu product manager compartió las siguientes solicitudes de funcionalidad:
+> 
+> #### Funcionalidad 1 — Filtro de rango de fechas en el dashboard principal
+> 
+> El equipo de finanzas quiere centrarse en períodos concretos sin ver todos los datos históricos a la vez. Añade dos inputs de fecha en la parte superior del dashboard — una fecha de inicio y una fecha de fin — que filtren todos los datos que se muestran actualmente en la página. Las fechas se envían a la API en formato `YYYY-MM-DD`. Ambos inputs son opcionales; cuando están vacíos, el dashboard muestra todos los datos disponibles. El rango de fechas disponible (la fecha más antigua y la más reciente del dataset) debe mostrarse cerca de los inputs como referencia para que el usuario sepa qué rango es válido.
+> 
+> Endpoint relevante: `GET /api/metrics/facets` (para obtener el rango de fechas disponible) y la extensión de filtros sobre el endpoint de métricas existente.
+> 
+> #### Funcionalidad 2 — Tabla de alertas de anomalías en el dashboard principal
+> 
+> Bajo los gráficos existentes, añade una tabla que destaque los períodos en los que el gasto subió de forma inesperada. La tabla tiene cuatro columnas: período, outcome registrado, media móvil de los 3 períodos anteriores e incremento porcentual. El umbral de alerta es configurable por el usuario mediante un input numérico (un ratio entre `0.01` y `1.0`, por defecto `0.3`). Si no se detectan anomalías para el umbral actual, la tabla debe mostrar un mensaje explícito de estado vacío — no simplemente desaparecer. La tabla también debe respetar el rango de fechas establecido en la Funcionalidad 1 si está activo.
+> 
+> Endpoint relevante: `GET /api/metrics/alerts?threshold=<ratio>`
+> 
+> #### Funcionalidad 3 — Vista de comparativa B2B vs B2C
+> 
+> Crea una nueva página en el dashboard para comparar el rendimiento de ingresos entre las dos líneas de negocio: B2B y B2C. La vista tiene dos secciones en paralelo. Cada sección muestra una tabla con las 5 categorías de ingreso principales de esa línea de negocio, mostrando nombre de categoría, total de ingresos y porcentaje sobre el total del grupo. Bajo ambas secciones, un único gráfico compara visualmente el total de ingresos de B2B frente a B2C. El usuario puede filtrar la comparativa por un rango de fechas (mismo formato `YYYY-MM-DD`). Las categorías disponibles para cada grupo deben obtenerse del endpoint de facetas.
+> 
+> Endpoints relevantes: `GET /api/metrics/categories/top?operation_type=income&limit=5` y `GET /api/metrics/facets`
 
-Una vez establecida esta postura crítica, el primer paso operativo es estabilizar el entorno de ejecución.
-
----
-
-## 2. Fase 1: Exploración Inicial y Validación del Asistente
-
-No puedes analizar un sistema que no puedes ejecutar. El primer paso es clonar el repositorio oficial y levantar los servicios.
-
-### Preparación del Entorno
-* **Fork y Clonación:** Realiza un fork del repositorio https://github.com/4GeeksAcademy/ai-eng-financial-dashboard-context-project a tu cuenta personal.
-* **Inicialización con Docker:**
-  > ⚠️ **Tip de Tech Lead:** Es común encontrar errores de permisos con `node_modules` al montar volúmenes en Docker. Si esto sucede, no intentes adivinar; copia el error exacto, entrégaselo a la IA y pídele una solución paso a paso para ajustar los permisos del contenedor.
-
-### Validación de Servicios
-
-| Servicio | URL de Acceso Local | Comando de Validación |
-| :--- | :--- | :--- |
-| **Frontend (Vite)** | `http://localhost:5173` | `npm run dev` (interno al contenedor) |
-| **Backend (FastAPI)** | `http://localhost:8000` | `curl http://localhost:8000/health` |
-| **Documentación API** | `http://localhost:8000/docs` | Acceso vía navegador (Swagger) |
-
-### Interrogación Crítica a la IA
-Solicita a tu LLM un resumen del proyecto: *"Analiza este repositorio y explica la arquitectura y el propósito del Dashboard Financiero"*.
-
-* **Tu tarea de Arquitecto:** No aceptes su respuesta. Contrasta el resumen con la estructura de carpetas. Si la IA describe un sistema de autenticación que no existe en `/src/auth`, corrígela de inmediato. El proceso de "alineación" termina cuando la IA admite sus errores de percepción y se ajusta a la evidencia del código fuente.
-
-Una base sólida de comprensión te permite pasar del simple "qué hace el código" a una auditoría rigurosa de "cómo de bien está construido".
+Tus especificaciones deben ser lo suficientemente precisas para que cualquier desarrollador — o agente de IA — pueda construir cada funcionalidad a partir de ellas, sin necesidad de hacerte ninguna pregunta.
 
 ---
 
-## 3. Fase 2: Diagnóstico de Ingeniería (Auditoría de Calidad)
+## 🌱 Cómo iniciar el proyecto
 
-Como auditor, debes identificar los patrones que garantizan la escalabilidad y los riesgos que amenazan la estabilidad.
+Este proyecto continúa en el mismo repositorio que usaste para el dashboard financiero. No hagas fork de un repo nuevo.
 
-### Hallazgos de Ingeniería
-Identifica y documenta con ejemplos exactos:
+1. Abre tu repositorio existente del dashboard financiero (tu fork de `ai-eng-financial-dashboard-context-project`) en GitHub Codespaces o clónalo localmente.
+2. Crea una nueva rama llamada `feature/frontend-specs` desde tu `main` actual.
+3. Crea una carpeta llamada `frontend/specs/` — aquí irán todos tus archivos de especificación.
+4. Arranca el backend y visita `/docs` para explorar los endpoints antes de escribir ninguna especificación.
 
-* **5 Buenas Prácticas (Preservar):**
-  * *Ejemplo:* Modularización de servicios de API.
-  * *¿So what?:* Un código modular permite que el LLM procese funciones pequeñas sin perder el contexto en archivos gigantescos, reduciendo errores de lógica.
-* **5 Malas Prácticas o Riesgos (Mitigar):**
-  * *Ejemplo:* Hardcoding de URLs o falta de tipado en las respuestas de la API.
-  * *¿So what?:* El tipado débil confunde a la IA durante el autocompletado y las refactorizaciones, provocando que el asistente sugiera propiedades inexistentes (alucinaciones).
-
-### Categorización y Gobernanza
-Agrupa tus hallazgos en categorías de **Arquitectura**, **Naming**, **DX (Developer Experience)** y **Testing**. Estos no son solo comentarios; son la justificación técnica para las reglas automáticas que implementarás en el siguiente paso.
-
-El diagnóstico de hallazgos es el insumo obligatorio para crear las reglas que gobernarán el comportamiento del equipo y de la IA.
+Si necesitas repasar el trabajo con ramas: cómo iniciar un proyecto de programación.
 
 ---
 
-## 4. Fase 3: Institucionalización de Reglas (`.agents/rules`)
+## 💻 Qué debes hacer
 
-Para que un estándar de ingeniería no sea "letra muerta", debe integrarse en el flujo de trabajo del asistente de IA mediante el directorio `.agents/rules`.
+### Tipos TypeScript
+- [ ] Crea `frontend/specs/api-types.ts` con interfaces TypeScript para las respuestas de la API usadas por las tres funcionalidades:
+  - `FacetsResponse` — usada por la referencia de rango de fechas y por la vista B2B vs B2C
+  - `AlertEntry`, `AlertsResponse` — usada por la tabla de anomalías
+  - `CategoryEntry`, `TopCategoriesResponse` — usada por la tabla comparativa B2B vs B2C
+- [ ] Crea `frontend/specs/param-types.ts` con tipos TypeScript para los parámetros de consulta enviados por cada funcionalidad:
+  - `DateRangeFilter` — los parámetros opcionales de fecha de inicio y fin compartidos entre funcionalidades (fechas como `string` en formato `YYYY-MM-DD`)
+  - `AlertsParams` — threshold más el filtro de rango de fechas
+  - `TopCategoriesParams` — tipo de operación, limit y el filtro de rango de fechas
+- [ ] Todos los tipos deben usar TypeScript estricto — sin `any`, sin `object`
+- [ ] Documenta cada propiedad con un comentario JSDoc explicando su significado, valores válidos y formato cuando corresponda
 
-### Estructura de Gobernanza
-Crea la carpeta y define reglas específicas. Las reglas genéricas como "haz código limpio" son inútiles; busca reglas accionables y basadas en riesgos detectados.
+### Especificación de componentes
+- [ ] Crea `frontend/specs/components.md` con el desglose de componentes para cada funcionalidad:
 
-```text
-.agents/
-└── rules/
-    ├── 01-api-naming-conventions.md  # Regla para evitar confusión en endpoints
-    ├── 02-frontend-structure.md      # Estándar de separación UI vs Lógica
-    └── 03-error-handling.md          # Protocolo de manejo de excepciones
-```
+### Documentación del contrato de datos
+- [ ] Crea `frontend/specs/README.md` documentando las tres funcionalidades:
+  - Qué endpoint/s consume cada funcionalidad (verifica las rutas contra `/docs`)
+  - Los tipos TypeScript usados para cada petición y respuesta
+  - Valores válidos y restricciones para cada parámetro
+  - Al menos 2 casos edge por funcionalidad y qué debe mostrar la UI en cada caso
 
-### Iteración de Reglas
-Una regla solo es válida si reduce un riesgo. Prueba tus reglas pidiendo a la IA: *"Genera un nuevo componente/endpoint siguiendo estrictamente la regla 01 y 02"*. Si el resultado sigue siendo ambiguo, refina la regla. La gobernanza técnica es un proceso iterativo, no estático.
-
-Al establecer gobernanza técnica, transformamos la intuición individual en memoria operativa colectiva.
-
----
-
-## 5. Fase 4: Construcción de la Memoria Operativa (Memory Bank)
-
-El mayor costo en ingeniería es la pérdida de contexto. Crearás el `memory-bank` para asegurar que el próximo desarrollador no herede un proyecto ciego.
-
-### Documentos Obligatorios
-Crea la carpeta `memory-bank/` e incluye:
-
-1. **`overview.md` (Producto):** Definición del Dashboard basada en las funcionalidades que realmente corren en el navegador, no en promesas.
-2. **`tech_stack.md` (Tecnología):** Debes auditar el `package.json` (frontend) y `requirements.txt` o similar (backend). Lista versiones exactas de React, FastAPI, y cualquier librería de visualización financiera encontrada.
-3. **`project_status.md` (Estado y Gaps):** Mapa de calor del proyecto. ¿Qué está roto? ¿Qué falta? Define las 3 prioridades técnicas inmediatas basándote en la deuda técnica detectada en la Fase 2.
-
-Estos artefactos son la garantía de que el ciclo de "handover incompleto" termina contigo.
+> ⚠️ **IMPORTANTE:** Estás especificando la capa frontend, no implementándola. No construyas componentes React ni hagas llamadas a la API. Tus entregables son los tipos TypeScript, `components.md` y `frontend/specs/README.md`.
 
 ---
 
-## 6. Lista de Verificación Final y Entrega Profesional
+## ✅ Qué vamos a evaluar
 
-Antes de enviar tu trabajo, asegúrate de cumplir con los estándares de un Tech Lead. La falta de evidencia directa es motivo de rechazo.
-
-- [ ] **Validación de Entorno:** ¿El proyecto levanta con `docker-compose` sin errores manuales no documentados?
-- [ ] **Alineación de IA:** ¿Corregiste activamente el resumen inicial de la IA usando rutas de archivos reales?
-- [ ] **Gobernanza (`.agents/rules`):** ¿Existen al menos 3 reglas específicas y accionables que mitiguen los riesgos detectados?
-- [ ] **Memoria Operativa (`memory-bank`):** ¿El stack tecnológico lista las dependencias reales extraídas de los archivos de configuración?
-- [ ] **Commits Granulares:** ¿Tu historial de Git muestra claramente 4 fases distintas (mínimo un commit por fase)?
-
-### Elementos Obligatorios para la Entrega:
-* **URL del Repositorio:** El fork público con todo el trabajo.
-* **Historial de Git:** Evidencia del proceso de pensamiento incremental.
-* **Carpeta `.agents/rules`:** El sistema de reglas configurado.
-* **Carpeta `memory-bank`:** La documentación técnica de alta fidelidad.
+- [ ] Todas las interfaces de respuesta coinciden con las formas que devuelve la API (verificable en `/docs`), sin usar `any`
+- [ ] `DateRangeFilter` define ambos campos como opcionales y tipados como `string` con una anotación JSDoc `YYYY-MM-DD`
+- [ ] `AlertsParams` y `TopCategoriesParams` extienden o incluyen `DateRangeFilter`
+- [ ] `components.md` nombra cada componente, lista sus props con tipos y especifica el renderizado condicional de cada funcionalidad
+- [ ] El estado vacío de la tabla de alertas está especificado explícitamente
+- [ ] El comportamiento cuando solo un input de fecha está relleno está especificado explícitamente
+- [ ] Ambos paneles de la vista B2B vs B2C especifican qué se renderiza cuando su lista top-5 está vacía
+- [ ] `frontend/specs/README.md` cubre las tres funcionalidades con endpoints, tipos, parámetros válidos y al menos 2 casos edge cada una
+- [ ] TypeScript compila sin errores (`npx tsc --noEmit`)
+- [ ] El código está commiteado en una rama llamada `feature/frontend-specs` con mensajes de commit significativos
