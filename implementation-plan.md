@@ -48,19 +48,15 @@ Este Plan de Implementación ha sido elaborado utilizando el **Método de los Tr
 
 ---
 
-### Fase 3: Documentación del Contrato de Datos, Restricciones y Casos Edge (`README.md`)
+### Fase 3: Documentación del Contrato de Datos, Restricciones y Casos Edge (`README.md`) ✅ (COMPLETADA)
 
 **Objetivo:** Crear el manual de especificaciones y casos límite del contrato de datos.
 
 #### Entregables:
-- **`frontend/specs/README.md`**:
-  - Documentación de las 3 funcionalidades: Endpoints consumidos (`/api/metrics/facets`, `/api/metrics/alerts`, `/api/metrics/categories/top`), tipos de entrada y salida, restricciones y rangos válidos.
-  - Documentación de **al menos 2 casos edge por funcionalidad**:
-    - *Funcionalidad 1:* Un solo input de fecha completado (`start_date` presente, `end_date` ausente); fechas seleccionadas fuera del rango `min_date`/`max_date`.
-    - *Funcionalidad 2:* Umbral `threshold` configurado que devuelve 0 anomalías (renderizado de `EmptyAlertsState`); valor de `threshold` fuera del rango `0.01` - `1.0`.
-    - *Funcionalidad 3:* Una o ambas listas top-5 de categorías retornan vacías (`[]`); filtrado por fecha que no contiene movimientos B2B o B2C.
-- **Entregable de Git:** 
-  `git commit -m "(FASE3-SPECS): documentacion de contratos de datos y casos edge"`
+- ✅ **`frontend/specs/README.md`**: Documentación del contrato de datos y 6 casos *edge* creados (2 por funcionalidad).
+- ✅ **Verificación:** Compilación TypeScript verificada (`tsc -b`) sin errores.
+- ✅ **Entregable de Git:** 
+  `git commit -m "(FASE3-SPECS): documentacion de contratos de datos y casos edge"` (Completado)
 
 ---
 
